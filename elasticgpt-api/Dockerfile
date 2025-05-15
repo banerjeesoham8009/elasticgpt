@@ -1,4 +1,4 @@
-#test1
+#test2
 FROM nginx:alpine
 COPY index.html /usr/share/nginx/html/
 EXPOSE 80
