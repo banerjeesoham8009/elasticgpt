@@ -3,14 +3,14 @@ name: Build & Deploy ElasticGPT Services
 on:
   push:
     branches:
-      - main1
-      - DEV1
+      - main
+      - DEV
     paths:
       - 'elasticgpt-ui/**'
       - 'elasticgpt-api/**'
       - 'elasticgpt-backend/**'
   pull_request:
-    branches: [main1]
+    branches: [main]
     types: [ready_for_review, synchronize, opened]
     paths:
       - 'elasticgpt-ui/**'
@@ -36,12 +36,12 @@ jobs:
         run: echo "commit_hash=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
 
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          project_id: elastic-edm
-          workload_identity_provider: "projects/117436331624/locations/global/workloadIdentityPools/elasticgpt-ci-oidc/providers/elasticgpt-ci-oidc"
-          service_account: "artifacts-egpt-writer@elastic-edm.iam.gserviceaccount.com"
+      # - name: Authenticate with Google Cloud
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     project_id: elastic-edm
+      #     workload_identity_provider: "projects/117436331624/locations/global/workloadIdentityPools/elasticgpt-ci-oidc/providers/elasticgpt-ci-oidc"
+      #     service_account: "artifacts-egpt-writer@elastic-edm.iam.gserviceaccount.com"
 
 
       - name: Configure Docker for GCP Artifact Registry
