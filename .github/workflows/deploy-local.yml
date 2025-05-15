@@ -48,27 +48,27 @@ jobs:
         run: gcloud auth configure-docker us-west1-docker.pkg.dev
 
 
-      - name: Docker Login (Elastic Docker Registry)
-        run: echo "${{ secrets.ELASTICGPT_GH_ACTIONS_DOCKER_PASSWORD }}" | docker login -u "${{ secrets.ELASTICGPT_GH_ACTIONS_DOCKER_USERNAME }}" --password-stdin docker.elastic.co
+      # - name: Docker Login (Elastic Docker Registry)
+      #   run: echo "${{ secrets.ELASTICGPT_GH_ACTIONS_DOCKER_PASSWORD }}" | docker login -u "${{ secrets.ELASTICGPT_GH_ACTIONS_DOCKER_USERNAME }}" --password-stdin docker.elastic.co
 
 
       - name: Build & Push UI Image
         run: |
-          IMAGE="us-west1-docker.pkg.dev/elastic-edm/idea-artifact-registry-elasticgpt/elasticgpt-ui"
+          IMAGE="us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx"
           docker build -t $IMAGE:${{ env.commit_hash }} ./elasticgpt-ui --platform linux/amd64
           docker push $IMAGE:${{ env.commit_hash }}
 
 
       - name: Build & Push API Image
         run: |
-          IMAGE="us-west1-docker.pkg.dev/elastic-edm/idea-artifact-registry-elasticgpt/elasticgpt-api"
+          IMAGE="us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx"
           docker build -t $IMAGE:${{ env.commit_hash }} ./elasticgpt-api --platform linux/amd64
           docker push $IMAGE:${{ env.commit_hash }}
 
 
       - name: Build & Push Backend Image
         run: |
-          IMAGE="us-west1-docker.pkg.dev/elastic-edm/idea-artifact-registry-elasticgpt/elasticgpt-backend"
+          IMAGE="us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx"
           docker build -t $IMAGE:${{ env.commit_hash }} ./elasticgpt-backend --platform linux/amd64
           docker push $IMAGE:${{ env.commit_hash }}
 
@@ -77,23 +77,32 @@ jobs:
         run: gcloud components install gke-gcloud-auth-plugin
 
 
+      # - name: Get GKE Credentials
+      #   run: |
+      #     gcloud container clusters get-credentials elastic-idea-apps-platform-dev-primary \
+      #       --project elastic-edm-dev \
+      #       --region us-west1
+
       - name: Get GKE Credentials
         run: |
-          gcloud container clusters get-credentials elastic-idea-apps-platform-dev-primary \
-            --project elastic-edm-dev \
-            --region us-west1
+          gcloud container clusters get-credentials test-demo --region us-west1 --project pro-micron-457614-s7
+
+
+      # - name: Deploy via Kustomize with tag substitution
+      #   run: |
+      #     export TAG=${{ env.commit_hash }}
+      #     cd deployments/web_app/overlay/dev
+      #     envsubst < <(kustomize build .) | kubectl apply -f -
 
 
       - name: Deploy via Kustomize with tag substitution
         run: |
-          export TAG=${{ env.commit_hash }}
-          cd deployments/web_app/overlay/dev
-          envsubst < <(kustomize build .) | kubectl apply -f -
+          kubectl apply -k deployments/web_app/overlay/dev
 
 
       - name: Verify Rollouts
         run: |
-          NAMESPACE=elasticgpt
-          kubectl rollout status deployment/ui -n $NAMESPACE
-          kubectl rollout status deployment/api -n $NAMESPACE
-          kubectl rollout status deployment/backend -n $NAMESPACE
+          NAMESPACE=default
+          kubectl rollout status deployment/nginx-project-v1 -n $NAMESPACE
+          kubectl rollout status deployment/nginx-project-v2 -n $NAMESPACE
+          kubectl rollout status deployment/nginx-project-v3 -n $NAMESPACE
