@@ -84,9 +84,6 @@ jobs:
            install_components: 'gke-gcloud-auth-plugin'
 
 
-
-
-
       # - name: Get GKE Credentials
       #   run: |
       #     gcloud container clusters get-credentials elastic-idea-apps-platform-dev-primary \
@@ -106,16 +103,16 @@ jobs:
           gcloud container clusters get-credentials test-demo --region us-west1 --project pro-micron-457614-s7
 
 
-      # - name: Deploy via Kustomize with tag substitution
-      #   run: |
-      #     export TAG=${{ env.commit_hash }}
-      #     cd deployments/web_app/overlay/dev
-      #     envsubst < <(kustomize build .) | kubectl apply -f -
-
-
       - name: Deploy via Kustomize with tag substitution
         run: |
-          kubectl apply -k deployments/web_app/overlay/dev
+          export TAG=${{ env.commit_hash }}
+          cd deployments/web_app/overlay/dev
+          envsubst < <(kustomize build .) | kubectl apply -f -
+
+
+      # - name: Deploy via Kustomize with tag substitution
+      #   run: |
+      #     kubectl apply -k deployments/web_app/overlay/dev
 
 
       - name: Verify Rollouts
