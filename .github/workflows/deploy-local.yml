@@ -121,3 +121,34 @@ jobs:
           kubectl rollout status deployment/nginx-project-v1 -n $NAMESPACE
           kubectl rollout status deployment/nginx-project-v2 -n $NAMESPACE
           kubectl rollout status deployment/nginx-project-v3 -n $NAMESPACE
+
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Verify Deployment Rollouts & Pod Status
+        run: |
+          set -e
+
+          NAMESPACE=elasticgpt-dev  # Update to your actual namespace
+          deployments=(ui api backend)
+
+          for deploy in "${deployments[@]}"; do
+            echo "Checking rollout for deployment/$deploy in namespace $NAMESPACE..."
+            kubectl rollout status deployment/$deploy --namespace=$NAMESPACE --timeout=120s
+
+            echo "Verifying pod status for app=$deploy in namespace $NAMESPACE..."
+            not_ready=$(kubectl get pods -n $NAMESPACE -l app=$deploy -o json | jq -r '
+              .items[] |
+              select(.status.phase != "Running" or (.status.containerStatuses[]?.ready != true)) |
+              .metadata.name')
+
+            if [[ -n "$not_ready" ]]; then
+              echo "Some pods for $deploy are not ready:"
+              echo "$not_ready"
+              kubectl describe pods -n $NAMESPACE -l app=$deploy
+              exit 1
+            else
+              echo "All pods for $deploy are running and ready in $NAMESPACE."
+            fi
+          done
