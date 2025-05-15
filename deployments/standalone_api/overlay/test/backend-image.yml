@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-project-v3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-v3
+  template:
+    metadata:
+      labels:
+        app: nginx-v3
+    spec:
+      containers:
+        - name: nginx
+          image: us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx:v3 
+          ports:
+            - containerPort: 80
