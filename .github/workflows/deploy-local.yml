@@ -93,6 +93,14 @@ jobs:
       #       --project elastic-edm-dev \
       #       --region us-west1
 
+
+      - name: Authenticate to Google Cloud
+        run: |
+          echo "${{ secrets.GCP_SA_KEY }}" > "${HOME}/gcp-key.json"
+          gcloud auth activate-service-account --key-file="${HOME}/gcp-key.json"
+          gcloud config set project pro-micron-457614-s7
+         
+
       - name: Get GKE Credentials
         run: |
           gcloud container clusters get-credentials test-demo --region us-west1 --project pro-micron-457614-s7
