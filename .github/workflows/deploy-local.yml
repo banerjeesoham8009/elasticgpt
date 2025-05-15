@@ -130,7 +130,7 @@ jobs:
         run: |
           set -e
 
-          NAMESPACE=elasticgpt-dev  # Update to your actual namespace
+          NAMESPACE=default
           deployments=(ui api backend)
 
           for deploy in "${deployments[@]}"; do
