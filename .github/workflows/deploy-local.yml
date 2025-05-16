@@ -135,7 +135,7 @@ jobs:
 
           for deploy in "${deployments[@]}"; do
             echo "Checking rollout for deployment/$deploy in namespace $NAMESPACE..."
-            kubectl rollout status deployment/$deploy --namespace=$NAMESPACE --timeout=120s
+            kubectl rollout status deployment/$deploy --namespace=$NAMESPACE --timeout=180s
 
             echo "Verifying pod status for app=$deploy in namespace $NAMESPACE..."
             not_ready=$(kubectl get pods -n $NAMESPACE -l app=$deploy -o json | jq -r '
