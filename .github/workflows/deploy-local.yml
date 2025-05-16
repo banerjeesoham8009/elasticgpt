@@ -107,7 +107,7 @@ jobs:
         run: |
           export TAG=${{ env.commit_hash }}
           cd deployments/web_app/overlay/dev
-          kustomize build . | envsubst | kubectl apply -f - .
+          kustomize build . | envsubst | kubectl apply -f -
 
 
       # - name: Deploy via Kustomize with tag substitution
