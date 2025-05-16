@@ -114,15 +114,6 @@ jobs:
       #   run: |
       #     kubectl apply -k deployments/web_app/overlay/dev
 
-
-      - name: Verify Rollouts
-        run: |
-          NAMESPACE=default
-          kubectl rollout status deployment/nginx-project-v1 -n $NAMESPACE
-          kubectl rollout status deployment/nginx-project-v2 -n $NAMESPACE
-          kubectl rollout status deployment/nginx-project-v3 -n $NAMESPACE
-
-
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
