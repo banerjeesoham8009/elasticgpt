@@ -3,7 +3,7 @@ name: Build & Deploy ElasticGPT Services
 on:
   push:
     branches:
-      - main
+      - main1
       - DEV1
     paths:
       - 'elasticgpt-ui/**'
