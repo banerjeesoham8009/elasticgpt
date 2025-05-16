@@ -95,8 +95,7 @@ jobs:
           NAMESPACE=elasticgpt
           kubectl rollout status deployment/ui -n $NAMESPACE
           kubectl rollout status deployment/api -n $NAMESPACE
-          kubectl rollout status deployment/backend -n $NAMESPACE
-		  
+          kubectl rollout status deployment/backend -n $NAMESPACE	  
 
       - name: Verify Deployment Rollouts & Pod Status
         run: |
