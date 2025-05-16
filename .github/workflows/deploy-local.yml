@@ -123,8 +123,8 @@ jobs:
           kubectl rollout status deployment/nginx-project-v3 -n $NAMESPACE
 
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+       #- name: Install jq
+       # run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Verify Deployment Rollouts & Pod Status
         run: |
