@@ -107,7 +107,7 @@ jobs:
         run: |
           export TAG=${{ env.commit_hash }}
           cd deployments/web_app/overlay/dev
-          envsubst < <(kustomize build .) | kubectl apply -f -
+          kustomize build . | envsubst | kubectl apply -f -.
 
 
       # - name: Deploy via Kustomize with tag substitution
@@ -123,8 +123,8 @@ jobs:
           kubectl rollout status deployment/nginx-project-v3 -n $NAMESPACE
 
 
-       #- name: Install jq
-       # run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Verify Deployment Rollouts & Pod Status
         run: |
