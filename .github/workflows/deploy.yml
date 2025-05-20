@@ -79,6 +79,12 @@ jobs:
           cd deployments/web_app/overlay/dev
           kustomize build . | envsubst | kubectl apply -f -
 
+      - name: Deploy standalone_api via Kustomize with tag substitution
+        run: |
+          export TAG=${{ env.commit_hash }}
+          cd deployments/standalone_api/overlay/dev
+          kustomize build . | envsubst | kubectl apply -f -
+
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
@@ -87,7 +93,7 @@ jobs:
           set -e
 
           NAMESPACE=elasticgpt
-          deployments=(backend api ui)
+          deployments=(backend api ui standalone_api)
 
           for deploy in "${deployments[@]}"; do
             echo "Checking rollout for deployment/$deploy in namespace $NAMESPACE..."
