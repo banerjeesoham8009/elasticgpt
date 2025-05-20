@@ -128,7 +128,7 @@ jobs:
           set -e
 
           NAMESPACE=default
-          deployments=(nginx-project-v1 nginx-project-v2 nginx-project-v3 standalone_api)
+          deployments=(nginx-project-v1 nginx-project-v2 nginx-project-v3 standalone-api)
 
           for deploy in "${deployments[@]}"; do
             echo "Checking rollout for deployment/$deploy in namespace $NAMESPACE..."
