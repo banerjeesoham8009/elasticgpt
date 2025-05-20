@@ -109,6 +109,12 @@ jobs:
           cd deployments/web_app/overlay/dev
           kustomize build . | envsubst | kubectl apply -f -
 
+      - name: Deploy standalone_api via Kustomize with tag substitution
+        run: |
+          export TAG=${{ env.commit_hash }}
+          cd deployments/standalone_api/overlay/dev
+          kustomize build . | envsubst | kubectl apply -f -
+
 
       # - name: Deploy via Kustomize with tag substitution
       #   run: |
@@ -122,7 +128,7 @@ jobs:
           set -e
 
           NAMESPACE=default
-          deployments=(nginx-project-v1 nginx-project-v2 nginx-project-v3)
+          deployments=(nginx-project-v1 nginx-project-v2 nginx-project-v3 standalone_api)
 
           for deploy in "${deployments[@]}"; do
             echo "Checking rollout for deployment/$deploy in namespace $NAMESPACE..."
