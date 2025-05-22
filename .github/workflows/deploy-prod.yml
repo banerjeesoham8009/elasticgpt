@@ -1,0 +1,142 @@
+name: Deploy to Prod (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag to deploy (from test build)'
+        required: true
+
+
+jobs:
+  build-and-deploy:
+    name: Build Images & Deploy to GKE
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Generate Commit Hash
+        id: vars
+        run: echo "commit_hash=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+
+      # - name: Authenticate with Google Cloud
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     project_id: elastic-edm
+      #     workload_identity_provider: "projects/117436331624/locations/global/workloadIdentityPools/elasticgpt-ci-oidc/providers/elasticgpt-ci-oidc"
+      #     service_account: "artifacts-egpt-writer@elastic-edm.iam.gserviceaccount.com"
+
+
+      - name: Configure Docker for GCP Artifact Registry
+        run: gcloud auth configure-docker us-west1-docker.pkg.dev
+
+
+      # - name: Docker Login (Elastic Docker Registry)
+      #   run: echo "${{ secrets.ELASTICGPT_GH_ACTIONS_DOCKER_PASSWORD }}" | docker login -u "${{ secrets.ELASTICGPT_GH_ACTIONS_DOCKER_USERNAME }}" --password-stdin docker.elastic.co
+
+
+      - name: Build & Push UI Image
+        run: |
+          IMAGE="us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx"
+          docker build -t $IMAGE:${{ env.commit_hash }} ./elasticgpt-ui --platform linux/amd64
+          docker push $IMAGE:${{ env.commit_hash }}
+
+
+      - name: Build & Push API Image
+        run: |
+          IMAGE="us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx"
+          docker build -t $IMAGE:${{ env.commit_hash }} ./elasticgpt-api --platform linux/amd64
+          docker push $IMAGE:${{ env.commit_hash }}
+
+
+      - name: Build & Push Backend Image
+        run: |
+          IMAGE="us-west1-docker.pkg.dev/pro-micron-457614-s7/nginx-app/nginx"
+          docker build -t $IMAGE:${{ env.commit_hash }} ./elasticgpt-backend --platform linux/amd64
+          docker push $IMAGE:${{ env.commit_hash }}
+
+
+      # - name: Install GKE Auth Plugin
+      #   run: |
+      #     gcloud components install gke-gcloud-auth-plugin
+
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+           install_components: 'gke-gcloud-auth-plugin'
+
+
+      # - name: Get GKE Credentials
+      #   run: |
+      #     gcloud container clusters get-credentials elastic-idea-apps-platform-dev-primary \
+      #       --project elastic-edm-dev \
+      #       --region us-west1
+
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+         
+
+      - name: Get GKE Credentials
+        run: |
+          gcloud container clusters get-credentials test-demo --region us-west1 --project pro-micron-457614-s7
+
+
+      - name: Deploy via Kustomize with tag substitution
+        run: |
+          export TAG=${{ github.event.inputs.tag }}
+          cd deployments/web_app/overlay/dev
+          kustomize build . | envsubst | kubectl apply -f -
+
+      - name: Deploy standalone_api via Kustomize with tag substitution
+        run: |
+          export TAG=${{ github.event.inputs.tag }}
+          cd deployments/standalone_api/overlay/dev
+          kustomize build . | envsubst | kubectl apply -f -
+
+
+      # - name: Deploy via Kustomize with tag substitution
+      #   run: |
+      #     kubectl apply -k deployments/web_app/overlay/dev
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Verify Deployment Rollouts & Pod Status
+        run: |
+          set -e
+
+          NAMESPACE=default
+          deployments=(nginx-project-v1 nginx-project-v2 nginx-project-v3 standalone-api)
+
+          for deploy in "${deployments[@]}"; do
+            echo "Checking rollout for deployment/$deploy in namespace $NAMESPACE..."
+            kubectl rollout status deployment/$deploy --namespace=$NAMESPACE --timeout=180s
+
+            echo "Verifying pod status for app=$deploy in namespace $NAMESPACE..."
+            not_ready=$(kubectl get pods -n $NAMESPACE -l app=$deploy -o json | jq -r '
+              .items[] |
+              select(.status.phase != "Running" or (.status.containerStatuses[]?.ready != true)) |
+              .metadata.name')
+
+            if [[ -n "$not_ready" ]]; then
+              echo "Some pods for $deploy are not ready:"
+              echo "$not_ready"
+              kubectl describe pods -n $NAMESPACE -l app=$deploy
+              exit 1
+            else
+              echo "All pods for $deploy are running and ready in $NAMESPACE."
+            fi
+          done
